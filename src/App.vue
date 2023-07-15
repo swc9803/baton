@@ -62,6 +62,7 @@ const createShape = (shape) => {
   ctx.strokeStyle = "black";
   ctx.stroke();
 };
+
 const detectCollision = (shape1, shape2) => {
   const dx = shape1.x + shape1.width / 2 - (shape2.x + shape2.width / 2);
   const dy = shape1.y + shape1.height / 2 - (shape2.y + shape2.height / 2);
@@ -70,7 +71,6 @@ const detectCollision = (shape1, shape2) => {
 
   return distance < minDistance;
 };
-
 const handleCollision = (shape1, shape2) => {
   const dx = shape1.x + shape1.width / 2 - (shape2.x + shape2.width / 2);
   const dy = shape1.y + shape1.height / 2 - (shape2.y + shape2.height / 2);
@@ -102,7 +102,7 @@ const animate = () => {
   shapes.forEach((shape, index) => {
     createShape(shape);
 
-    // 충돌 감지 및 처리
+    // 충돌 감지
     for (let i = index + 1; i < shapes.length; i++) {
       const otherShape = shapes[i];
       if (detectCollision(shape, otherShape)) {
@@ -123,7 +123,7 @@ const createBalloon = () => {
 
   shape.isAnimate = true;
   gsap.to(shape, {
-    y: 0,
+    y: 50,
     duration: 3,
     ease: "power3",
     onComplete: () => {
@@ -150,16 +150,25 @@ const popBalloon = (e) => {
   const clickX = e.clientX - canvasRect.left;
   const clickY = e.clientY - canvasRect.top;
 
-  shapes = shapes.filter((shape) => {
+  shapes.forEach((shape) => {
     if (
       clickX >= shape.x &&
       clickX <= shape.x + shape.width &&
       clickY >= shape.y &&
       clickY <= shape.y + shape.height
     ) {
-      return false; // 도형을 제거하기 위해 false를 반환
+      shape.isAnimate = true;
+      gsap.killTweensOf(shape);
+      gsap.to(shape, {
+        y: "-=200",
+        duration: 2,
+        ease: "power1.in",
+        onComplete: () => {
+          // 애니메이션이 끝난 후 풍선 제거
+          shapes = shapes.filter((s) => s !== shape);
+        },
+      });
     }
-    return true; // 도형 유지를 위해 true를 반환
   });
 };
 
