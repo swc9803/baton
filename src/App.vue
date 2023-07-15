@@ -1,13 +1,14 @@
 <template>
   <div class="canvasWrapper">
     <canvas ref="canvasRef" />
-    <button @click="createBalloon">생성</button>
+    <House @click="createBalloon" />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import gsap from "gsap";
+import House from "./components/House.vue";
 
 const canvasRef = ref();
 let ctx;
@@ -54,12 +55,18 @@ const createShape = (shape) => {
     ctx.closePath();
   }
 
-  ctx.fillStyle = "black";
+  // 랜덤 색
+  if (!shape.color) {
+    shape.color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+  }
+  ctx.fillStyle = shape.color;
   ctx.fill();
+  ctx.stroke();
+
+  // 풍선 끈
   ctx.beginPath();
   ctx.moveTo(shape.x + shape.width / 2, shape.y + shape.height);
-  ctx.lineTo(canvasRef.value.width / 2, canvasRef.value.height / 2);
-  ctx.strokeStyle = "black";
+  ctx.lineTo(canvasRef.value.width / 2, canvasRef.value.height * 0.8);
   ctx.stroke();
 };
 
@@ -67,7 +74,7 @@ const detectCollision = (shape1, shape2) => {
   const dx = shape1.x + shape1.width / 2 - (shape2.x + shape2.width / 2);
   const dy = shape1.y + shape1.height / 2 - (shape2.y + shape2.height / 2);
   const distance = Math.sqrt(dx * dx + dy * dy);
-  const minDistance = shape1.width / 2 + shape2.width / 2;
+  const minDistance = shape1.width / 4 + shape2.width / 4;
 
   return distance < minDistance;
 };
@@ -123,7 +130,7 @@ const createBalloon = () => {
 
   shape.isAnimate = true;
   gsap.to(shape, {
-    y: 50,
+    y: gsap.utils.random(50, canvasRef.value.height / 3),
     duration: 3,
     ease: "power3",
     onComplete: () => {
