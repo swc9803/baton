@@ -87,11 +87,13 @@ const handleCollision = (shape1, shape2) => {
       Math.pow(shape1.x - shape1NewX, 2) + Math.pow(shape1.y - shape1NewY, 2)
     ) * 0.1;
 
-  gsap.to(shape1, {
-    x: shape1NewX - shape1.width / 2,
-    y: shape1NewY - shape1.height / 2,
-    duration: distanceVelocity,
-  });
+  if (!shape1.isAnimate) {
+    gsap.to(shape1, {
+      x: shape1NewX - shape1.width / 2,
+      y: shape1NewY - shape1.height / 2,
+      duration: distanceVelocity,
+    });
+  }
 };
 
 const animate = () => {
@@ -119,6 +121,7 @@ const createBalloon = () => {
   const shape = setShape(type, x, y);
   shapes.push(shape);
 
+  shape.isAnimate = true;
   gsap.to(shape, {
     y: 0,
     duration: 3,
@@ -131,6 +134,7 @@ const createBalloon = () => {
         yoyo: true,
         repeat: -1,
       });
+      shape.isAnimate = false;
     },
   });
   gsap.from(shape, {
