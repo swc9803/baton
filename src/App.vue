@@ -8,7 +8,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import gsap from "gsap";
-import House from "./components/House.vue";
+import House from "@/components/House.vue";
 
 const canvasRef = ref();
 let ctx;
@@ -121,6 +121,7 @@ const animate = () => {
   requestAnimationFrame(animate);
 };
 
+// 풍선 추가
 const createBalloon = () => {
   const shapeTypes = ["square", "circle", "triangle"];
   const { x, y } = randomPosition();
@@ -131,7 +132,7 @@ const createBalloon = () => {
   shape.isAnimate = true;
   gsap.to(shape, {
     y: gsap.utils.random(50, canvasRef.value.height / 3),
-    duration: 3,
+    duration: 5,
     ease: "power3",
     onComplete: () => {
       gsap.to(shape, {
@@ -148,10 +149,11 @@ const createBalloon = () => {
     width: 0,
     height: 0,
     ease: "power2",
-    duration: 1,
+    duration: 2,
   });
 };
 
+// 풍선 제거
 const popBalloon = (e) => {
   const canvasRect = canvasRef.value.getBoundingClientRect();
   const clickX = e.clientX - canvasRect.left;
@@ -162,12 +164,13 @@ const popBalloon = (e) => {
       clickX >= shape.x &&
       clickX <= shape.x + shape.width &&
       clickY >= shape.y &&
-      clickY <= shape.y + shape.height
+      clickY <= shape.y + shape.height &&
+      !shape.isAnimate
     ) {
       shape.isAnimate = true;
       gsap.killTweensOf(shape);
       gsap.to(shape, {
-        y: "-=200",
+        y: "-=300",
         duration: 2,
         ease: "power1.in",
         onComplete: () => {
@@ -205,15 +208,14 @@ body {
   width: 100%;
   height: 100vh;
   overflow: hidden;
+  background: linear-gradient(
+    0deg,
+    rgb(0, 255, 255) 0%,
+    rgb(200, 255, 255) 80%
+  );
   canvas {
     width: 100%;
     height: 100%;
-  }
-  button {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1;
   }
 }
 </style>

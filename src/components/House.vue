@@ -238,7 +238,7 @@
   left: 50%;
   transform: translate(-50%, 0);
   width: 50%;
-  z-index: 9;
+  z-index: 1;
   cursor: pointer;
 }
 </style>
