@@ -1,5 +1,8 @@
 <template>
   <div class="canvasWrapper">
+    <div class="cloudWrapper">
+      <Cloud v-for="cloud in 8" :key="cloud.id" class="cloud" />
+    </div>
     <canvas ref="canvasRef" />
     <House @click="createBalloon" />
   </div>
@@ -9,6 +12,7 @@
 import { ref, onMounted } from "vue";
 import gsap from "gsap";
 import House from "@/components/House.vue";
+import Cloud from "@/components/Cloud.vue";
 
 const canvasRef = ref();
 let ctx;
@@ -132,8 +136,8 @@ const createBalloon = () => {
   shape.isAnimate = true;
   gsap.to(shape, {
     y: gsap.utils.random(50, canvasRef.value.height / 3),
-    duration: 5,
-    ease: "power3",
+    duration: 3,
+    ease: "power2",
     onComplete: () => {
       gsap.to(shape, {
         y: "+=20",
@@ -208,14 +212,68 @@ body {
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background: linear-gradient(
-    0deg,
-    rgb(0, 255, 255) 0%,
-    rgb(200, 255, 255) 80%
-  );
+  background: linear-gradient(0deg, rgb(0, 183, 255) 30%, rgb(0, 255, 255) 90%);
   canvas {
     width: 100%;
     height: 100%;
+  }
+
+  $cloudCount: 8;
+  .cloudWrapper {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    .cloud {
+      position: absolute;
+      @for $i from 1 through $cloudCount {
+        &:nth-child(#{$i}) {
+          @if $i % 2 == 0 {
+            transform: scaleX(-1);
+          }
+
+          $cloudPositions: (
+            (
+              bottom: 0,
+              left: 20%,
+            ),
+            (
+              bottom: 0,
+              right: 20%,
+            ),
+            (
+              bottom: 10%,
+              left: 5%,
+            ),
+            (
+              bottom: 10%,
+              right: 5%,
+            ),
+            (
+              bottom: 12%,
+              left: 30%,
+            ),
+            (
+              bottom: 20%,
+              right: 30%,
+            ),
+            (
+              bottom: 30%,
+              left: 20%,
+            ),
+            (
+              bottom: 30%,
+              right: 20%,
+            )
+          );
+          $position: nth($cloudPositions, $i);
+          bottom: map-get($position, bottom);
+          left: map-get($position, left);
+          right: map-get($position, right);
+        }
+      }
+    }
   }
 }
 </style>

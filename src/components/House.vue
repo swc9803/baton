@@ -234,10 +234,10 @@
 <style lang="scss" scoped>
 .house {
   position: fixed;
-  bottom: 0;
+  bottom: -1px;
   left: 50%;
   transform: translate(-50%, 0);
-  width: 50%;
+  height: 35%;
   z-index: 1;
   cursor: pointer;
 }
