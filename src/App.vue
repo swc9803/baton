@@ -112,20 +112,17 @@ const createShape = (shape) => {
       shape.y + shape.height / 4
     );
   } else if (shape.type === "star") {
-    const spikes = 5; // 별의 가지 개수
-    const outerRadius = shape.width / 2; // 외부 반지름
-    const innerRadius = outerRadius * 0.4; // 내부 반지름
+    const outerRadius = shape.width / 2;
+    const innerRadius = outerRadius * 0.4;
     const centerX = shape.x + shape.width / 2;
     const centerY = shape.y + shape.height / 2;
 
-    let angle = Math.PI / 2; // 시작 각도
-    const step = (Math.PI * 2) / (spikes * 2); // 가지 간격
+    let angle = Math.PI / 2;
+    const step = (Math.PI * 2) / (5 * 2);
+    ctx.moveTo(centerX, centerY + outerRadius);
 
-    ctx.moveTo(centerX, centerY + outerRadius); // 시작점을 별의 아래쪽 가장자리로 이동
-
-    for (let i = 0; i < spikes * 2; i++) {
-      const radius = i % 2 === 0 ? outerRadius : innerRadius; // 가지의 반지름
-
+    for (let i = 0; i < 5 * 2; i++) {
+      const radius = i % 2 === 0 ? outerRadius : innerRadius;
       const x = centerX + Math.cos(angle) * radius;
       const y = centerY + Math.sin(angle) * radius;
       ctx.lineTo(x, y);
@@ -151,6 +148,7 @@ const createShape = (shape) => {
   ctx.stroke();
 };
 
+// 충돌 감지
 const detectCollision = (shape1, shape2) => {
   const dx = shape1.x + shape1.width / 2 - (shape2.x + shape2.width / 2);
   const dy = shape1.y + shape1.height / 2 - (shape2.y + shape2.height / 2);
@@ -212,36 +210,44 @@ const createBalloon = () => {
     width: 0,
     height: 0,
     ease: "power2",
-    duration: 2,
+    duration: 3.5,
   });
 };
 
 // 풍선 제거
-const popBalloon = (e) => {
+const deleteBalloon = (e) => {
   const canvasRect = canvasRef.value.getBoundingClientRect();
   const clickX = e.clientX - canvasRect.left;
   const clickY = e.clientY - canvasRect.top;
+
+  let clickedBalloon = null;
 
   shapes.forEach((shape) => {
     if (
       clickX >= shape.x &&
       clickX <= shape.x + shape.width &&
       clickY >= shape.y &&
-      clickY <= shape.y + shape.height
+      clickY <= shape.y + shape.height &&
+      !shape.isAnimate
     ) {
       shape.isAnimate = true;
-      gsap.killTweensOf(shape);
-      gsap.to(shape, {
-        y: -canvasRef.value.height / 5,
-        duration: 2,
-        ease: "power1.in",
-        onComplete: () => {
-          // 애니메이션이 끝난 후 풍선 제거
-          shapes = shapes.filter((s) => s !== shape);
-        },
-      });
+      if (!clickedBalloon || shape.y < clickedBalloon.y) {
+        clickedBalloon = shape;
+      }
     }
   });
+
+  if (clickedBalloon) {
+    gsap.killTweensOf(clickedBalloon);
+    gsap.to(clickedBalloon, {
+      y: -canvasRef.value.height / 2,
+      duration: 2,
+      ease: "power3.in",
+      onComplete: () => {
+        shapes = shapes.filter((s) => s !== clickedBalloon);
+      },
+    });
+  }
 };
 
 const animate = () => {
@@ -283,7 +289,7 @@ onMounted(() => {
     duration: 1,
   });
 
-  canvasRef.value.addEventListener("click", popBalloon);
+  canvasRef.value.addEventListener("click", deleteBalloon);
   window.addEventListener("resize", onResize);
 });
 </script>
