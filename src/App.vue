@@ -22,28 +22,32 @@ const saleRef = ref();
 const canvasRef = ref();
 let ctx;
 let shapes = [];
-const balloonWidth = 50;
-const balloonHeight = 50;
 
 const randomPosition = () => {
-  const x = Math.random() * (canvasRef.value.width - balloonWidth);
+  const x = Math.random() * (canvasRef.value.width * 0.9);
   const y =
-    Math.random() * (canvasRef.value.height / 2 - balloonHeight) +
-    canvasRef.value.height / 2;
+    Math.random() * (canvasRef.value.height / 2) + canvasRef.value.height / 2;
 
   return { x, y };
 };
-
 const setShape = (type, x, y) => {
+  const minWidth = canvasRef.value.width * 0.1; // 화면 폭의 10%
+  const maxWidth = canvasRef.value.width * 0.15; // 화면 폭의 15%
+  const minHeight = canvasRef.value.height * 0.1; // 화면 높이의 10%
+  const maxHeight = canvasRef.value.height * 0.15; // 화면 높이의 15%
+
   let width, height;
 
   if (type === "circle") {
-    const radius = Math.floor(Math.random() * 26) + 30;
+    const maxRadius = Math.min(maxWidth, maxHeight) / 2;
+    const radius =
+      Math.floor(Math.random() * (maxRadius - minWidth + 1)) + minWidth;
     width = radius * 2;
     height = radius * 2;
   } else {
-    width = Math.floor(Math.random() * 26) + 50;
-    height = width;
+    width = Math.floor(Math.random() * (maxWidth - minWidth + 1)) + minWidth;
+    height =
+      Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
   }
 
   return {
@@ -115,20 +119,16 @@ const createShape = (shape) => {
     const centerY = shape.y + shape.height / 2;
 
     let angle = Math.PI / 2; // 시작 각도
-    const step = Math.PI / spikes; // 가지 간격
+    const step = (Math.PI * 2) / (spikes * 2); // 가지 간격
 
-    ctx.moveTo(centerX, centerY + outerRadius); // 첫 번째 점
+    ctx.moveTo(centerX, centerY + outerRadius); // 시작점을 별의 아래쪽 가장자리로 이동
 
-    for (let i = 0; i < spikes; i++) {
-      const outerX = centerX + Math.cos(angle) * outerRadius;
-      const outerY = centerY + Math.sin(angle) * outerRadius;
-      ctx.lineTo(outerX, outerY);
+    for (let i = 0; i < spikes * 2; i++) {
+      const radius = i % 2 === 0 ? outerRadius : innerRadius; // 가지의 반지름
 
-      angle += step;
-
-      const innerX = centerX + Math.cos(angle) * innerRadius;
-      const innerY = centerY + Math.sin(angle) * innerRadius;
-      ctx.lineTo(innerX, innerY);
+      const x = centerX + Math.cos(angle) * radius;
+      const y = centerY + Math.sin(angle) * radius;
+      ctx.lineTo(x, y);
 
       angle += step;
     }
@@ -265,6 +265,7 @@ const animate = () => {
 const onResize = () => {
   canvasRef.value.width = window.innerWidth;
   canvasRef.value.height = window.innerHeight;
+  shapes = [];
 };
 
 onMounted(() => {
