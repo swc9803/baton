@@ -1,5 +1,8 @@
 <template>
   <div class="canvasWrapper">
+    <div class="sale" ref="saleRef">
+      <Sale />
+    </div>
     <div class="cloudWrapper">
       <Cloud v-for="cloud in 8" :key="cloud.id" class="cloud" />
     </div>
@@ -13,7 +16,9 @@ import { ref, onMounted } from "vue";
 import gsap from "gsap";
 import House from "@/components/House.vue";
 import Cloud from "@/components/Cloud.vue";
+import Sale from "@/components/Sale.vue";
 
+const saleRef = ref();
 const canvasRef = ref();
 let ctx;
 let shapes = [];
@@ -30,12 +35,23 @@ const randomPosition = () => {
 };
 
 const setShape = (type, x, y) => {
+  let width, height;
+
+  if (type === "circle") {
+    const radius = Math.floor(Math.random() * 26) + 30;
+    width = radius * 2;
+    height = radius * 2;
+  } else {
+    width = Math.floor(Math.random() * 26) + 50;
+    height = width;
+  }
+
   return {
     type,
     x,
     y,
-    width: balloonWidth,
-    height: balloonHeight,
+    width,
+    height,
   };
 };
 
@@ -56,6 +72,67 @@ const createShape = (shape) => {
     ctx.moveTo(shape.x + shape.width / 2, shape.y);
     ctx.lineTo(shape.x, shape.y + shape.height);
     ctx.lineTo(shape.x + shape.width, shape.y + shape.height);
+    ctx.closePath();
+  } else if (shape.type === "heart") {
+    ctx.moveTo(shape.x + shape.width / 2, shape.y + shape.height / 4);
+    ctx.bezierCurveTo(
+      shape.x + shape.width / 4,
+      shape.y,
+      shape.x,
+      shape.y + shape.height / 4,
+      shape.x,
+      shape.y + shape.height / 2
+    );
+    ctx.bezierCurveTo(
+      shape.x,
+      shape.y + (shape.height * 3) / 4,
+      shape.x + shape.width / 4,
+      shape.y + shape.height,
+      shape.x + shape.width / 2,
+      shape.y + shape.height
+    );
+    ctx.bezierCurveTo(
+      shape.x + (shape.width * 3) / 4,
+      shape.y + shape.height,
+      shape.x + shape.width,
+      shape.y + (shape.height * 3) / 4,
+      shape.x + shape.width,
+      shape.y + shape.height / 2
+    );
+    ctx.bezierCurveTo(
+      shape.x + shape.width,
+      shape.y + shape.height / 4,
+      shape.x + (shape.width * 3) / 4,
+      shape.y,
+      shape.x + shape.width / 2,
+      shape.y + shape.height / 4
+    );
+  } else if (shape.type === "star") {
+    const spikes = 5; // 별의 가지 개수
+    const outerRadius = shape.width / 2; // 외부 반지름
+    const innerRadius = outerRadius * 0.4; // 내부 반지름
+    const centerX = shape.x + shape.width / 2;
+    const centerY = shape.y + shape.height / 2;
+
+    let angle = Math.PI / 2; // 시작 각도
+    const step = Math.PI / spikes; // 가지 간격
+
+    ctx.moveTo(centerX, centerY + outerRadius); // 첫 번째 점
+
+    for (let i = 0; i < spikes; i++) {
+      const outerX = centerX + Math.cos(angle) * outerRadius;
+      const outerY = centerY + Math.sin(angle) * outerRadius;
+      ctx.lineTo(outerX, outerY);
+
+      angle += step;
+
+      const innerX = centerX + Math.cos(angle) * innerRadius;
+      const innerY = centerY + Math.sin(angle) * innerRadius;
+      ctx.lineTo(innerX, innerY);
+
+      angle += step;
+    }
+
     ctx.closePath();
   }
 
@@ -107,27 +184,9 @@ const handleCollision = (shape1, shape2) => {
   }
 };
 
-const animate = () => {
-  ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
-
-  shapes.forEach((shape, index) => {
-    createShape(shape);
-
-    // 충돌 감지
-    for (let i = index + 1; i < shapes.length; i++) {
-      const otherShape = shapes[i];
-      if (detectCollision(shape, otherShape)) {
-        handleCollision(shape, otherShape);
-      }
-    }
-  });
-
-  requestAnimationFrame(animate);
-};
-
 // 풍선 추가
 const createBalloon = () => {
-  const shapeTypes = ["square", "circle", "triangle"];
+  const shapeTypes = ["square", "circle", "triangle", "heart", "star"];
   const { x, y } = randomPosition();
   const type = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
   const shape = setShape(type, x, y);
@@ -168,13 +227,12 @@ const popBalloon = (e) => {
       clickX >= shape.x &&
       clickX <= shape.x + shape.width &&
       clickY >= shape.y &&
-      clickY <= shape.y + shape.height &&
-      !shape.isAnimate
+      clickY <= shape.y + shape.height
     ) {
       shape.isAnimate = true;
       gsap.killTweensOf(shape);
       gsap.to(shape, {
-        y: "-=300",
+        y: -canvasRef.value.height / 5,
         duration: 2,
         ease: "power1.in",
         onComplete: () => {
@@ -184,6 +242,24 @@ const popBalloon = (e) => {
       });
     }
   });
+};
+
+const animate = () => {
+  ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height);
+
+  shapes.forEach((shape, index) => {
+    createShape(shape);
+
+    // 충돌 감지
+    for (let i = index + 1; i < shapes.length; i++) {
+      const otherShape = shapes[i];
+      if (detectCollision(shape, otherShape)) {
+        handleCollision(shape, otherShape);
+      }
+    }
+  });
+
+  requestAnimationFrame(animate);
 };
 
 const onResize = () => {
@@ -196,6 +272,15 @@ onMounted(() => {
 
   onResize();
   animate();
+
+  gsap.to(saleRef.value, {
+    scale: 1.1,
+    transformOrigin: "center center",
+    yoyo: true,
+    ease: "power1.inOut",
+    repeat: -1,
+    duration: 1,
+  });
 
   canvasRef.value.addEventListener("click", popBalloon);
   window.addEventListener("resize", onResize);
@@ -213,6 +298,14 @@ body {
   height: 100vh;
   overflow: hidden;
   background: linear-gradient(0deg, rgb(0, 183, 255) 30%, rgb(0, 255, 255) 90%);
+  .sale {
+    position: fixed;
+    top: 55%;
+    left: 70%;
+    transform: translate(-30%, -45%);
+    height: 60%;
+    z-index: 1;
+  }
   canvas {
     width: 100%;
     height: 100%;
@@ -271,6 +364,10 @@ body {
           bottom: map-get($position, bottom);
           left: map-get($position, left);
           right: map-get($position, right);
+
+          @if $i > 4 {
+            transform: scale(0.5);
+          }
         }
       }
     }
